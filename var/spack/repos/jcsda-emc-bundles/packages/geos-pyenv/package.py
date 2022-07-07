@@ -6,7 +6,7 @@
 from spack import *
 
 
-class UfsPyenv(BundlePackage):
+class GeosPyenv(BundlePackage):
     """
     Python development environment for NASA GEOS.
     """

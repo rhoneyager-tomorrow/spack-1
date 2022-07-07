@@ -27,7 +27,7 @@ class PyCylcFlow(PythonPackage):
     depends_on('py-ansimarkup', type=('build', 'run'))
     depends_on('py-graphene', type=('build', 'run'))
     depends_on('py-metomi-isodatetime', type=('build', 'run'))
-    depends_on('py-pyuv', type=('build', 'run')
+    depends_on('py-pyuv', type=('build', 'run'))
     
     depends_on('py-async-timeout', type=('build', 'run'))
     depends_on('py-colorama', type=('build', 'run'))

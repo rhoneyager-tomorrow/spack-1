@@ -23,18 +23,9 @@ class PyCylcUiserver(PythonPackage):
 
     depends_on('py-cylc-flow', type=('build', 'run'))
     depends_on('py-tornado', type=('build', 'run'))
-    depends_on('py-trailets', type=('build', 'run'))
+    depends_on('py-traitlets', type=('build', 'run'))
     depends_on('py-rx', type=('build', 'run'))
-
-    # Need these dependencies
-    depends_on('py-graphql-ws', type=('build', 'run'))
     depends_on('py-graphene', type=('build', 'run'))
+    depends_on('py-graphql-ws', type=('build', 'run'))
     depends_on('py-graphene-tornado', type=('build', 'run'))
-
-    def global_options(self, spec, prefix):
-        options = []
-        return options
-
-    def install_options(self, spec, prefix):
-        options = []
-        return options
+    depends_on('py-jupyter-server', type=('build', 'run'))

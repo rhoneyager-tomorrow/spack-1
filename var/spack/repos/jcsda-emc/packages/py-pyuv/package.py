@@ -18,14 +18,3 @@ class PyPyuv(PythonPackage):
     version('1.4.0', sha256='caea2004d1125fe17cbde3c211c8abc72844e9b8dd7dfa007711e98fbc96fbc2')
 
     depends_on('py-setuptools', type='build')
-
-    # FIXME: Add additional dependencies if required.
-    # depends_on('py-foo', type=('build', 'run'))
-
-    def global_options(self, spec, prefix):
-        options = []
-        return options
-
-    def install_options(self, spec, prefix):
-        options = []
-        return options

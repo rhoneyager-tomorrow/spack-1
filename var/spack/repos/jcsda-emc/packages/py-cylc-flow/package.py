@@ -22,20 +22,17 @@ class PyCylcFlow(PythonPackage):
     depends_on('py-setuptools', type='build')
 
     depends_on('py-aiofiles', type=('build', 'run'))
-
-    # Need packages for these
     depends_on('py-ansimarkup', type=('build', 'run'))
     depends_on('py-graphene', type=('build', 'run'))
-    depends_on('py-metomi-isodatetime', type=('build', 'run'))
+    depends_on('py-isodatetime', type=('build', 'run'))
     depends_on('py-pyuv', type=('build', 'run'))
-    
     depends_on('py-async-timeout', type=('build', 'run'))
     depends_on('py-colorama', type=('build', 'run'))
     depends_on('py-jinja2', type=('build', 'run'))
     depends_on('py-protobuf', type=('build', 'run'))
     depends_on('py-psutil', type=('build', 'run'))
     depends_on('py-pyzmq', type=('build', 'run'))
-    depends_on('py-urwid', type=('build', 'run'))
+    depends_on('py-urwid@2:', type=('build', 'run'))
     depends_on('py-rx', type=('build', 'run'))
     depends_on('py-promise', type=('build', 'run'))
     depends_on('py-markupsafe', type=('build', 'run'))

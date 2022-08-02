@@ -26,11 +26,11 @@ RUN {% if monitor.enabled %}--mount=type=secret,id=su --mount=type=secret,id=st 
 {% if strip %}
 
 # Strip all the binaries
-RUN find -L {{ paths.view }}/* -type f -exec readlink -f '{}' \; | \
-    xargs file -i | \
-    grep 'charset=binary' | \
-    grep 'x-executable\|x-archive\|x-sharedlib' | \
-    awk -F: '{print $1}' | xargs strip -s
+#RUN find -L {{ paths.view }}/* -type f -exec readlink -f '{}' \; | \
+#    xargs file -i | \
+#    grep 'charset=binary' | \
+#    grep 'x-executable\|x-archive\|x-sharedlib' | \
+#    awk -F: '{print $1}' | xargs strip -s
 {% endif %}
 
 # Modifications to the environment that are necessary to run

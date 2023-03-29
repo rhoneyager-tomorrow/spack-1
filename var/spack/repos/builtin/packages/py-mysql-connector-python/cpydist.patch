@@ -1,19 +1,15 @@
 --- a/cpydist/__init__.py	2022-12-01 05:49:53.000000000 -0700
-+++ b/cpydist/__init__.py	2023-03-29 10:52:03.000000000 -0600
-@@ -524,9 +524,14 @@
-                 os.path.join(self._mysql_info["link_dirs"][0], "libmysqlclient*")
-             )
++++ b/cpydist/__init__.py	2023-03-29 17:22:22.000000000 -0600
+@@ -528,6 +528,12 @@
+             self.log.info("copying %s -> %s", lib, self._build_mysql_lib_dir)
+             shutil.copy2(lib, self._build_mysql_lib_dir)
  
-+        # Patched by spack. Seems that this file gets copied more than once, but
++        # Patched by spack. These file may get copied more than once, but
 +        # the source libraries sometimes don't have the write flag set.
-         for lib in libs:
--            self.log.info("copying %s -> %s", lib, self._build_mysql_lib_dir)
--            shutil.copy2(lib, self._build_mysql_lib_dir)
-+            if os.path.isfile(os.path.join(self._build_mysql_lib_dir, lib)):
-+                self.log.info("skipping %s -> %s, already exists", lib, self._build_mysql_lib_dir)
-+            else:
-+                self.log.info("copying %s -> %s", lib, self._build_mysql_lib_dir)
-+                shutil.copy2(lib, self._build_mysql_lib_dir)
- 
++        for lib in os.listdir(self._build_mysql_lib_dir):
++            self.log.info("adjust permissions for %s", os.path.join(self._build_mysql_lib_dir, lib))
++            os.chmod(os.path.join(self._build_mysql_lib_dir, lib), 0o644)
++
          # Remove all but static libraries to force static linking
          if os.name == "posix":
+             self.log.info(

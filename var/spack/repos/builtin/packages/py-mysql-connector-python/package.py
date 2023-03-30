@@ -28,9 +28,9 @@ class PyMysqlConnectorPython(PythonPackage):
     #depends_on("py-protobuf@3.11.0:3.20.3", type=("build", "run"), when="@8.0.32")
 
     # Required for the MySQL C extension. Assume that users always want that.
-    depends_on("openssl", type=("build"))
-    depends_on("mysql", type=("build"))
-
+    depends_on("openssl", type=("build", "link"))
+    depends_on("mysql", type=("build", "link"))
+    depends_on("zstd", type=("build", "link"))
     # Fixes an issue with files being copied into the build tree multiple times,
     # but these files may not have the write permissions set for the user.
     patch("cpydist.patch", when="@8.0.32")

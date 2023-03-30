@@ -37,5 +37,21 @@ class PyMysqlConnectorPython(PythonPackage):
 
     def setup_build_environment(self, env):
         env.set("MYSQL_CAPI", os.path.join(self.spec["mysql"].prefix.bin, "mysql_config"))
+
+        # Can't do this because the py-mysql-connector-python build system wants
+        # the exact OPENSSL_LIB_DIR, and if openssl is an external package then
+        # spack doesn't know if is self.spec["openssl"].prefix + "lib" or + "lib64".
+        #env.set("OPENSSL_INCLUDE_DIR", self.spec["openssl"].prefix.include)
+        #env.set("OPENSSL_LIB_DIR", self.spec["openssl"].prefix.lib)
+
+        ssl_root = self.spec["openssl"].prefix
+        ssl_lib = ["libssl"]
+        ssl_libs = find_libraries(ssl_lib, root=ssl_root, recursive=True, shared=True)
+        ssl_libs += find_libraries(ssl_lib, root=ssl_root, recursive=True, shared=False)
+        if not ssl_libs:
+            raise InstallError(f'Unable to recursively locate SSL libraries in {ssl_root}')
+        ssl_lib_dirs = [ os.path.dirname(lib) for lib in ssl_libs ]
+        if not len(set(ssl_lib_dirs)) == 1:
+            raise InstallError(f'Unable to identify unique SSL library directory from {ssl_libs}')
         env.set("OPENSSL_INCLUDE_DIR", self.spec["openssl"].prefix.include)
-        env.set("OPENSSL_LIB_DIR", self.spec["openssl"].prefix.lib)
+        env.set("OPENSSL_LIB_DIR", ssl_lib_dirs[0])

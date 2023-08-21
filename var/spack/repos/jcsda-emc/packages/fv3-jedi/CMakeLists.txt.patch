@@ -1,0 +1,11 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -9,6 +9,8 @@
+ 
+ cmake_minimum_required( VERSION 3.3.2 FATAL_ERROR )
+ 
++find_package( ecbuild 3.6 REQUIRED HINTS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../ecbuild)
++
+ project( fv3jedi VERSION 1.6.0 LANGUAGES C CXX Fortran )
+ 
+ option(OPENMP "Build fv3-jedi with OpenMP support" ON)

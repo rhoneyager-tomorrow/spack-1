@@ -44,5 +44,9 @@ class UfsSrwAppEnv(BundlePackage):
     depends_on("w3emc")
     depends_on("wgrib2")
     depends_on("gsi-ncdiag")
+    depends_on("met")
+    depends_on("metplus")
+    depends_on("mapl")
+    depends_on("ncio")
 
     # There is no need for install() since there is no code.

@@ -351,6 +351,9 @@ class Openssl(Package):  # Uses Fake Autotools, should subclass Package
         "shared", default=True, description="Build shared library version", when="platform=darwin"
     )
     variant(
+        "shared", default=True, description="Build shared library version", when="platform=cray"
+    )
+    variant(
         "shared",
         default=False,
         description="Build shared library version",

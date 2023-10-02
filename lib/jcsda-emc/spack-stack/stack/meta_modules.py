@@ -259,9 +259,14 @@ def setup_meta_modules():
     module_choice = module_config["default"]["enable"][0]
     logging.info("  ... configured to use {} modules".format(module_choice))
 
-    # Prevent the use of tcl modules on macOS because sed syntax is different
-    if module_choice == "tcl" and sys.platform == "darwin":
-        raise Exception("Use of tcl modules on macOS not supported - sed syntax differs")
+    # Need to set a few variables when tcl modules are used
+    if module_choice == "tcl":
+        module_replace_patterns = ["is-loaded", "module load", "depends-on"]
+        # sed syntax differs on macOS
+        if sys.platform == "darwin":
+            sed_syntax_fix = "''"
+        else:
+            sed_syntax_fix = ""
 
     # Top-level module directory
     module_dir = substitute_config_vars(module_config["default"]["roots"][module_choice])
@@ -297,8 +302,13 @@ def setup_meta_modules():
     # Then, check for mpi providers - recursively for compilers
     mpi_dict = get_matched_dict(module_dir, mpi_candidate_list, compiler_candidate_list)
     if not mpi_dict:
-        raise Exception("No matching MPI providers found")
-    logging.info(" ... stack mpi providers: '{}'".format(mpi_dict))
+        user_input = input(
+            "No matching MPI providers found, proceed without creating MPI module hierarchy? (yes/no): "
+        )
+        if not user_input.lower() in ["yes", "y"]:
+            raise Exception("No matching MPI providers found")
+    else:
+        logging.info(" ... stack mpi providers: '{}'".format(mpi_dict))
 
     # For some environments, there are only compiler+mpi-dependent modules,
     # and therefore the compiler itself is not recorded in compiler_dict.
@@ -422,18 +432,13 @@ def setup_meta_modules():
                         logging.debug(
                             "  ... ... ... removing compiler prefices in {}".format(filepath)
                         )
-                        cmd = "sed -i 's#is-loaded {}/{}/#is-loaded #g' {}".format(
-                            compiler_name, compiler_version, filepath
-                        )
-                        status = os.system(cmd)
-                        if not status == 0:
-                            raise Exception("Error while calling '{}'".format(cmd))
-                        cmd = "sed -i 's#load {}/{}/#load #g' {}".format(
-                            compiler_name, compiler_version, filepath
-                        )
-                        status = os.system(cmd)
-                        if not status == 0:
-                            raise Exception("Error while calling '{}'".format(cmd))
+                        for pattern in module_replace_patterns:
+                            cmd = "sed -i {4} 's#{0} {1}/{2}/#{0} #g' {3}".format(
+                                pattern, compiler_name, compiler_version, filepath, sed_syntax_fix
+                            )
+                            status = os.system(cmd)
+                            if not status == 0:
+                                raise Exception("Error while calling '{}'".format(cmd))
 
             # Read compiler template into module_content string
             with open(COMPILER_TEMPLATES[module_choice]) as f:
@@ -646,40 +651,34 @@ def setup_meta_modules():
                                         filepath
                                     )
                                 )
+                                # Search patterns
+                                patterns = ["is-loaded", "module load", "depends-on"]
                                 # First, compiler-only dependent modules
-                                cmd = "sed -i 's#is-loaded {}/{}/#is-loaded #g' {}".format(
-                                    compiler_name, compiler_version, filepath
-                                )
-                                status = os.system(cmd)
-                                if not status == 0:
-                                    raise Exception("Error while calling '{}'".format(cmd))
-                                cmd = "sed -i 's#load {}/{}/#load #g' {}".format(
-                                    compiler_name, compiler_version, filepath
-                                )
-                                status = os.system(cmd)
-                                if not status == 0:
-                                    raise Exception("Error while calling '{}'".format(cmd))
+                                for pattern in module_replace_patterns:
+                                    cmd = "sed -i {4} 's#{0} {1}/{2}/#{0} #g' {3}".format(
+                                        pattern,
+                                        compiler_name,
+                                        compiler_version,
+                                        filepath,
+                                        sed_syntax_fix,
+                                    )
+                                    status = os.system(cmd)
+                                    if not status == 0:
+                                        raise Exception("Error while calling '{}'".format(cmd))
                                 # Then, compiler+mpi-dependent modules
-                                cmd = "sed -i 's#is-loaded {}/{}/{}/{}/#is-loaded #g' {}".format(
-                                    mpi_name,
-                                    mpi_version,
-                                    compiler_name,
-                                    compiler_version,
-                                    filepath,
-                                )
-                                status = os.system(cmd)
-                                if not status == 0:
-                                    raise Exception("Error while calling '{}'".format(cmd))
-                                cmd = "sed -i 's#load {}/{}/{}/{}/#load #g' {}".format(
-                                    mpi_name,
-                                    mpi_version,
-                                    compiler_name,
-                                    compiler_version,
-                                    filepath,
-                                )
-                                status = os.system(cmd)
-                                if not status == 0:
-                                    raise Exception("Error while calling '{}'".format(cmd))
+                                for pattern in module_replace_patterns:
+                                    cmd = "sed -i {6} 's#{0} {1}/{2}/{3}/{4}/#{0} #g' {5}".format(
+                                        pattern,
+                                        mpi_name,
+                                        mpi_version,
+                                        compiler_name,
+                                        compiler_version,
+                                        filepath,
+                                        sed_syntax_fix,
+                                    )
+                                    status = os.system(cmd)
+                                    if not status == 0:
+                                        raise Exception("Error while calling '{}'".format(cmd))
 
                     # Read compiler lua template into module_content string
                     with open(MPI_TEMPLATES[module_choice]) as f:
@@ -698,7 +697,10 @@ def setup_meta_modules():
                         f.write(module_content)
                     logging.info("  ... writing {}".format(mpi_module_file))
 
-    del package_name
+    try:
+        del package_name
+    except:
+        pass
     # Create python modules. Need to accommodate both external
     # Python distributions and spack-built Python distributions.
     # If there is no package config info for Python, then we are
@@ -748,10 +750,21 @@ Python, list the correct version in the package config"""
                     python_dict = get_matched_dict(compiler_install_dir, python_candidate_list)
             logging.info(" ... stack python providers: '{}'".format(python_dict))
             if not python_dict:
-                raise Exception(
-                    """No matching Python version found. Make sure that the
-Python version in the package config matches what spack installed."""
+                user_input = input(
+                    "No matching Python version found found, proceed without creating Python modules? (yes/no): "
                 )
+                if not user_input.lower() in ["yes", "y"]:
+                    raise Exception(
+                        """"No matching Python version found. Make sure that the
+Python version in the package config matches what spack installed."""
+                    )
+                else:
+                    logging.info(
+                        "Metamodule generation completed successfully in {}".format(
+                            meta_module_dir
+                        )
+                    )
+                    return
 
     for compiler_name in compiler_dict.keys():
         for compiler_version in compiler_dict[compiler_name]:

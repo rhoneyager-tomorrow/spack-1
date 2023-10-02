@@ -16,6 +16,8 @@ class GsiEnv(BundlePackage):
 
     version("1.0.0")
 
+    depends_on("blas")
+    depends_on("lapack")
     depends_on("netcdf-c")
     depends_on("netcdf-fortran")
     depends_on("bufr")

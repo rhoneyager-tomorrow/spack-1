@@ -26,8 +26,8 @@ class Fv3JediLinearmodel(CMakePackage):
     )
     # Note that the options for mkl, mpi, and openmp are lazily written in fv3-jedi-linearmodel.
     # These options just turn on a find_package call. If a package is already found, for example by
-    # one of the package dependencies, then that component is silently used even if the user toggles
-    # it off. This is a bug and should be fixed eventually.
+    # one of the package dependencies, then that component is silently used even if the user
+    # toggles it off. This is a bug and should be fixed eventually.
     variant("mkl", default=False, description="Use MKL for LAPACK implementation (if available)")
     variant("mpi", default=True, description="Support for MPI distributed parallelism")
     variant("openmp", default=True, description="Build with OpenMP support")

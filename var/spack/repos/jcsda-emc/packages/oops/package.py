@@ -22,7 +22,8 @@ class Oops(CMakePackage):
     variant("mkl", default=False, description="Use MKL for LAPACK implementation (if available)")
     variant("openmp", default=True, description="Build oops with OpenMP support")
     variant("qg", default=True, description="Build QG toy model")
-    # variant('autoprofiling', default=False, description='Enable function-based autoprofiling with GPTL (if available)')
+    # variant('autoprofiling', default=False,
+    #         description='Enable function-based autoprofiling with GPTL (if available)')
     # variant('gptl', default=False, description='Use GPTL profiling library (if available)')
 
     depends_on("boost@1.64:")

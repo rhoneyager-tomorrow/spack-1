@@ -28,8 +28,8 @@ class Fv3Jedi(CMakePackage):
     variant("gsibec", default=True, description="FV3-SABER block GSI")
     # Note that the option for openmp is lazily written in fv3-jedi.
     # It just enables a find_package call. If a package is already found, for example by
-    # one of the package dependencies, then that component is silently used even if the user toggles
-    # it off. This is a bug and should be fixed eventually.
+    # one of the package dependencies, then that component is silently used even if the user
+    # toggles it off. This is a bug and should be fixed eventually.
     variant("openmp", default=True, description="Build with OpenMP support")
     variant("ropp", default=False, description="Enable usage of ropp")
     variant("sp", default=True, description="Enable usage of ncep-sp")
@@ -88,8 +88,8 @@ class Fv3Jedi(CMakePackage):
 
     # find_package(ecbuild REQUIRED) is needed when using ecbuild.
     patch("CMakeLists.txt.patch", when="@1.6:1.7")
-    # fv3-jedi is improperly including git_functions.cmake by searching for an environment variable.
-    # It should instead use the jedicmake_FUNCTIONS variable, which is deliberately exported by jedi-cmake.
+    # fv3-jedi is improperly including git_functions.cmake via an environment variable.
+    # It should instead use the jedicmake_FUNCTIONS variable, which is exported by jedi-cmake.
     patch("test.CMakeLists.txt.patch", when="@1.6:1.7")
     # fv3-jedi depends on these macros that are defined (and not exported) in ufo.
     patch("cmake.fv3jedi_extra_macros.cmake.patch", when="@1.6:1.7")

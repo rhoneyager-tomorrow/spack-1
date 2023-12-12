@@ -62,7 +62,8 @@ class Saber(CMakePackage):
 
     # Lapack vs MKL bug.
     patch("CMakeLists.txt.patch", when="@1.7:1.8")
-    # Another Lapack vs MKL bug. If ENABLE_MKL was off, then the saber-import.cmake file had a syntax error.
+    # Another Lapack vs MKL bug. If ENABLE_MKL was off, then the
+    # saber-import.cmake file had a syntax error.
     patch("saber-import.cmake.in.patch", when="@1.7:1.8")
     # JCSDA/saber#22 / JCSDA-internal/saber#652. Fixed in later versions.
     patch("quench.src.Fields.cc.patch", when="@1.7")

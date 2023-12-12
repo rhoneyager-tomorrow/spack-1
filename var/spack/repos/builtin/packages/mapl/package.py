@@ -159,6 +159,14 @@ class Mapl(CMakePackage):
     # Patch to add missing MPI Fortran target to top-level CMakeLists.txt
     patch("mapl-2.12.3-mpi-fortran.patch", when="@:2.12.3")
 
+    # Patch for mpich4 for selected older versions of mapl used by UFS
+    # https://github.com/GEOS-ESM/MAPL/pull/2381
+    patch("backport-b571b3f-from-develop-to-v2.40.3.patch", when="@2.40.3")
+    patch("backport-b571b3f-from-develop-to-v2.35.2.patch", when="@2.35.2")
+    conflicts("mpich@4", when="@2.40.4:")
+    conflicts("mpich@4", when="@2.35.3:2.40.2")
+    conflicts("mpich@4", when="@:2.35.1")
+
     variant("flap", default=False, description="Build with FLAP support", when="@:2.39")
     variant("pflogger", default=True, description="Build with pFlogger support")
     variant("fargparse", default=True, description="Build with fArgParse support")

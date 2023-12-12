@@ -28,7 +28,8 @@ class Esmf(MakefilePackage):
 
     # Develop is a special name for spack and is always considered the newest version
     version("develop", branch="develop")
-    # generate chksum with spack checksum esmf@x.y.z
+    # generate chksum with 'spack checksum esmf@x.y.z'
+    version("8.6.0", sha256="ed057eaddb158a3cce2afc0712b49353b7038b45b29aee86180f381457c0ebe7")
     version("8.5.0", sha256="acd0b2641587007cc3ca318427f47b9cae5bfd2da8d2a16ea778f637107c29c4")
     version("8.4.2", sha256="969304efa518c7859567fa6e65efd960df2b4f6d72dbf2c3f29e39e4ab5ae594")
     version("8.4.1", sha256="1b54cee91aacaa9df400bd284614cbb0257e175f6f3ec9977a2d991ed8aa1af6")
@@ -43,7 +44,7 @@ class Esmf(MakefilePackage):
         sha256="0ff43ede83d1ac6beabd3d5e2a646f7574174b28a48d1b9f2c318a054ba268fd",
         deprecated=True,
     )
-    version("8.3.0b09", commit="5b7e546c4b", deprecated=True)
+    version("8.3.0b09", commit="5b7e546c4ba350bff9c9ebd00e5fa1c6315d17da", deprecated=True)
     version("8.2.0", sha256="27866c31fdb63c58e78211de970470ca02d274f5d4d6d97e94284d63b1c1d9e4")
     version("8.1.1", sha256="629690c7a488e84ac7252470349458d7aaa98b54c260f8b3911a2e2f3e713dd0")
     version(
@@ -77,7 +78,7 @@ class Esmf(MakefilePackage):
     variant("debug", default=False, description="Build with debugging symbols and options enabled")
     variant("shared", default=True, description="Build shared library")
 
-    # 'esmf_comm' and 'esmf_os' variants allow override values for their corresponding
+    # 'esmf_os', 'esmf_comm', 'esmf_pio' variants allow override values for their corresponding
     # build environment variables. Documentation, including valid values, can be found at
     # https://earthsystemmodeling.org/docs/release/latest/ESMF_usrdoc/node10.html#SECTION000105000000000000000
     variant("esmf_os", default="auto", description="Override for ESMF_OS variable")
@@ -98,26 +99,13 @@ class Esmf(MakefilePackage):
     depends_on("netcdf-fortran@3.6:", when="+netcdf")
     depends_on("parallel-netcdf@1.2.0:", when="+pnetcdf")
     depends_on("xerces-c@3.1.0:", when="+xerces")
-    depends_on(
-        "parallelio@2.5.7: +mpi+pnetcdf", when="@8.3.0:8.3.99+external-parallelio+mpi+pnetcdf"
-    )
-    depends_on("parallelio@2.5.7: +mpi", when="@8.3.0:8.3.99+external-parallelio+mpi~pnetcdf")
-    depends_on(
-        "parallelio@2.5.7: ~mpi+pnetcdf", when="@8.3.0:8.3.99+external-parallelio~mpi+pnetcdf"
-    )
-    depends_on("parallelio@2.5.7: ~mpi", when="@8.3.0:8.3.99+external-parallelio~mpi~pnetcdf")
-    depends_on(
-        "parallelio@2.5.9: +mpi+pnetcdf", when="@8.4.0:8.4.99+external-parallelio+mpi+pnetcdf"
-    )
-    depends_on("parallelio@2.5.9: +mpi", when="@8.4.0:8.4.99+external-parallelio+mpi~pnetcdf")
-    depends_on(
-        "parallelio@2.5.9: ~mpi+pnetcdf", when="@8.4.0:8.4.99+external-parallelio~mpi+pnetcdf"
-    )
-    depends_on("parallelio@2.5.9: ~mpi", when="@8.4.0:8.4.99+external-parallelio~mpi~pnetcdf")
-    depends_on("parallelio@2.5.10: +mpi+pnetcdf", when="@8.5.0:+external-parallelio+mpi+pnetcdf")
-    depends_on("parallelio@2.5.10: +mpi", when="@8.5.0:+external-parallelio+mpi~pnetcdf")
-    depends_on("parallelio@2.5.10: ~mpi+pnetcdf", when="@8.5.0:+external-parallelio~mpi+pnetcdf")
-    depends_on("parallelio@2.5.10: ~mpi", when="@8.5.0:+external-parallelio~mpi~pnetcdf")
+    depends_on("parallelio@2.5.7: +mpi", when="@8.3+external-parallelio+mpi")
+    depends_on("parallelio@2.5.7: ~mpi", when="@8.3+external-parallelio~mpi")
+    depends_on("parallelio@2.5.9: +mpi", when="@8.4+external-parallelio+mpi")
+    depends_on("parallelio@2.5.9: ~mpi", when="@8.4+external-parallelio~mpi")
+    depends_on("parallelio@2.5.10: +mpi", when="@8.5:+external-parallelio+mpi")
+    depends_on("parallelio@2.5.10: ~mpi", when="@8.5:+external-parallelio~mpi")
+    depends_on("cmake@3.5.2:", type="build", when="~external-parallelio")
 
     # Testing dependencies
     depends_on("perl", type="test")
@@ -356,11 +344,7 @@ class Esmf(MakefilePackage):
             netcdfc = spec["netcdf-c"]
             if netcdfc.satisfies("~shared"):
                 nc_config = which(os.path.join(netcdfc.prefix.bin, "nc-config"))
-                # DH* 20230710
-                # original spack code
-                # nc_flags = nc_config("--libs", output=str).strip()
                 nc_flags = nc_config("--static", "--libs", output=str).strip()
-                # *DH 20230710
                 env.set("ESMF_NETCDF_LIBS", nc_flags)
 
         ###################

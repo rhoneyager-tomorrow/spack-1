@@ -31,7 +31,7 @@ class EwokEnv(BundlePackage):
     )
 
     depends_on("jedi-base-env +python", type="run")
-    depends_on("awscli", type="run")
+    depends_on("awscli-v2", type="run")
     depends_on("py-boto3", type="run")
     depends_on("py-cartopy", type="run")
     depends_on("py-gitpython", type="run")

@@ -1,4 +1,4 @@
-# Copyright 2013-2022 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2023 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -36,13 +36,13 @@ class Fckit(CMakePackage):
         values=("Debug", "Release", "RelWithDebInfo"),
     )
 
-    variant("eckit", default=True)
+    variant("eckit", default=True, description="Enable eckit")
     depends_on("eckit@:1.23 +mpi", when="@:0.10 +eckit")
     depends_on("eckit@1.24: +mpi", when="@0.11: +eckit")
 
     variant("openmp", default=True, description="Use OpenMP?")
     depends_on("llvm-openmp", when="+openmp %apple-clang", type=("build", "run"))
-    variant("shared", default=True)
+    variant("shared", default=True, description="Build shared libraries")
     variant("fismahigh", default=False, description="Apply patching for FISMA-high compliance")
     variant(
         "finalize_ddts",

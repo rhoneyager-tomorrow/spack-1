@@ -1,0 +1,595 @@
+From fb36cd686a21c281c636dc9aa4f21ec4ccfba3a9 Mon Sep 17 00:00:00 2001
+From: Dom Heinzeller <dom.heinzeller@icloud.com>
+Date: Mon, 23 Oct 2023 09:42:13 -0600
+Subject: [PATCH] Backporting commit b571b3f from develop to v2.40.3
+
+---
+ CHANGELOG.md                             |  3 +
+ CMakeLists.txt                           | 10 +++
+ cmake/CheckCompilerCapabilities.cmake    | 27 ++++++++
+ cmake/CheckFortranSource.cmake           | 83 ++++++++++++++++++++++++
+ cmake/support_for_assumed_type.F90       |  5 ++
+ cmake/support_for_c_loc_assumed_size.F90 | 10 +++
+ cmake/support_for_mpi_alloc_mem_cptr.F90 | 12 ++++
+ cmake/support_for_mpi_ierror_keyword.F90 |  7 ++
+ pfio/CMakeLists.txt                      |  4 ++
+ pfio/DirectoryService.F90                | 42 +++++++-----
+ pfio/MpiMutex.F90                        | 12 +++-
+ pfio/RDMAReference.F90                   | 24 +++++--
+ pfio/ShmemReference.F90                  | 24 +++++--
+ 13 files changed, 232 insertions(+), 31 deletions(-)
+ create mode 100644 cmake/CheckCompilerCapabilities.cmake
+ create mode 100644 cmake/CheckFortranSource.cmake
+ create mode 100644 cmake/support_for_assumed_type.F90
+ create mode 100644 cmake/support_for_c_loc_assumed_size.F90
+ create mode 100644 cmake/support_for_mpi_alloc_mem_cptr.F90
+ create mode 100644 cmake/support_for_mpi_ierror_keyword.F90
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index a68810e478..27a5b671ec 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
+ ## [Unreleased]
+ 
+ ### Added
++- Various workarounds for building MAPL with MPICH
++  - Non-support for `C_PTR` in `MPI_Alloc_Mem` ((MPICH Issue #6691)[https://github.com/pmodels/mpich/issues/6691])
++  - Non-support for `ierror` keyword arguments with `use mpi` ((MPICH Issue #6693)[https://github.com/pmodels/mpich/issues/6693])
+ 
+ ### Changed
+ 
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b37803868b..da6374da73 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -211,6 +211,16 @@ add_definitions(-Dsys${CMAKE_SYSTEM_NAME})
+ add_subdirectory (MAPL_cfio MAPL_cfio_r4)
+ add_subdirectory (MAPL_cfio MAPL_cfio_r8)
+ 
++# This tests for various capabilities of the compiler
++# We mainly use it for MPICH issues
++include(CheckCompilerCapabilities)
++
++# 1. The first workaround is in pfio for https://github.com/pmodels/mpich/issues/6691
++# 2. Below is to workaround https://github.com/pmodels/mpich/issues/6693
++if(SUPPORT_FOR_MPI_IERROR_KEYWORD)
++  add_compile_definitions(SUPPORT_FOR_MPI_IERROR_KEYWORD)
++endif()
++
+ add_subdirectory (pfio)
+ add_subdirectory (profiler)
+ add_subdirectory (generic)
+diff --git a/cmake/CheckCompilerCapabilities.cmake b/cmake/CheckCompilerCapabilities.cmake
+new file mode 100644
+index 0000000000..bd1b773cb7
+--- /dev/null
++++ b/cmake/CheckCompilerCapabilities.cmake
+@@ -0,0 +1,27 @@
++include (CheckFortranSource)
++
++CHECK_FORTRAN_SOURCE_COMPILE (
++  ${CMAKE_CURRENT_LIST_DIR}/support_for_assumed_type.F90
++  SUPPORT_FOR_ASSUMED_TYPE
++)
++
++CHECK_FORTRAN_SOURCE_COMPILE (
++  ${CMAKE_CURRENT_LIST_DIR}/support_for_c_loc_assumed_size.F90
++  SUPPORT_FOR_C_LOC_ASSUMED_SIZE
++)
++
++CHECK_FORTRAN_SOURCE_COMPILE (
++  ${CMAKE_CURRENT_LIST_DIR}/support_for_mpi_alloc_mem_cptr.F90
++  SUPPORT_FOR_MPI_ALLOC_MEM_CPTR
++  MPI
++)
++
++CHECK_FORTRAN_SOURCE_COMPILE (
++  ${CMAKE_CURRENT_LIST_DIR}/support_for_mpi_ierror_keyword.F90
++  SUPPORT_FOR_MPI_IERROR_KEYWORD
++  MPI
++)
++
++
++
++
+diff --git a/cmake/CheckFortranSource.cmake b/cmake/CheckFortranSource.cmake
+new file mode 100644
+index 0000000000..3f2982abf6
+--- /dev/null
++++ b/cmake/CheckFortranSource.cmake
+@@ -0,0 +1,83 @@
++macro (CHECK_FORTRAN_SOURCE_COMPILE file var)
++
++  if (NOT CMAKE_REQUIRED_QUIET)
++    message (STATUS "Performing Test ${var}")
++  endif ()
++
++  if (${ARGC} GREATER 2)
++    try_compile (
++      ${var}
++      ${CMAKE_BINARY_DIR}
++      ${file}
++      CMAKE_FLAGS "-DCOMPILE_DEFINITIONS:STRING=${MPI_Fortran_FLAGS}"
++      "-DINCLUDE_DIRECTORIES:LIST=${MPI_Fortran_INCLUDE_DIRS}"
++      "-DLINK_LIBRARIES:LIST=${MPI_Fortran_LIBRARIES}"
++      )
++  else ()
++    
++    try_compile (
++      ${var}
++      ${CMAKE_BINARY_DIR}
++      ${file}
++      )
++  endif ()
++
++  if (${var})
++    if (NOT CMAKE_REQUIRED_QUIET)
++      message(STATUS "Performing Test ${var}: SUCCESS")
++    endif ()
++
++    add_definitions(-D${var})
++
++  else ()
++
++    if (NOT CMAKE_REQUIRED_QUIET)
++      message(STATUS "Performing Test ${var}: FAILURE")
++    endif ()
++
++  endif ()
++
++endmacro (CHECK_FORTRAN_SOURCE_COMPILE)
++
++
++macro (CHECK_FORTRAN_SOURCE_RUN file var)
++
++  if (NOT CMAKE_REQUIRED_QUIET)
++    message (STATUS "Performing Test ${var}")
++  endif ()
++
++  try_run (
++    code_runs
++    code_compiles
++    ${CMAKE_BINARY_DIR}
++    ${file}
++    )
++
++  if (${code_compiles})
++    if (${code_runs} EQUAL 0)
++
++      if (NOT CMAKE_REQUIRED_QUIET)
++	message (STATUS "Performing Test ${var}: SUCCESS")
++      endif ()
++
++      add_definitions(-D${var})
++
++      set (${var} 1)
++
++    else ()
++
++      if (NOT CMAKE_REQUIRED_QUIET)
++	message (STATUS "Performing Test ${var}: RUN FAILURE")
++      endif ()
++
++    endif ()
++
++  else ()
++
++      if (NOT CMAKE_REQUIRED_QUIET)
++	message (STATUS "Performing Test ${var}: BUILD FAILURE")
++      endif ()
++
++  endif()
++
++endmacro (CHECK_FORTRAN_SOURCE_RUN)
+diff --git a/cmake/support_for_assumed_type.F90 b/cmake/support_for_assumed_type.F90
+new file mode 100644
+index 0000000000..e3e3d08683
+--- /dev/null
++++ b/cmake/support_for_assumed_type.F90
+@@ -0,0 +1,5 @@
++subroutine foo(x)
++   type(*) :: x(*)
++end subroutine foo
++program main
++end program main
+diff --git a/cmake/support_for_c_loc_assumed_size.F90 b/cmake/support_for_c_loc_assumed_size.F90
+new file mode 100644
+index 0000000000..0d52420705
+--- /dev/null
++++ b/cmake/support_for_c_loc_assumed_size.F90
+@@ -0,0 +1,10 @@
++subroutine foo(x)
++  use iso_c_binding
++  real, target :: x(*)
++  type (C_PTR) :: loc
++  loc = c_loc(x(1))
++end subroutine foo
++
++program main
++end program main
++
+diff --git a/cmake/support_for_mpi_alloc_mem_cptr.F90 b/cmake/support_for_mpi_alloc_mem_cptr.F90
+new file mode 100644
+index 0000000000..ce30fb032f
+--- /dev/null
++++ b/cmake/support_for_mpi_alloc_mem_cptr.F90
+@@ -0,0 +1,12 @@
++program main
++   use mpi
++   use iso_fortran_env, only: INT64
++   use iso_c_binding, only: C_PTR
++
++   integer(kind=INT64) :: sz
++   type (c_ptr) :: ptr
++   
++   call MPI_Alloc_mem(sz, MPI_INFO_NULL, ptr, ierror)
++   
++end program main
++
+diff --git a/cmake/support_for_mpi_ierror_keyword.F90 b/cmake/support_for_mpi_ierror_keyword.F90
+new file mode 100644
+index 0000000000..02bdaf2dcf
+--- /dev/null
++++ b/cmake/support_for_mpi_ierror_keyword.F90
+@@ -0,0 +1,7 @@
++program main
++   use mpi
++   implicit none
++   integer :: status
++   call MPI_Init(ierror=status)
++end program main
++
+diff --git a/pfio/CMakeLists.txt b/pfio/CMakeLists.txt
+index 7de858a3ed..a500d799e3 100644
+--- a/pfio/CMakeLists.txt
++++ b/pfio/CMakeLists.txt
+@@ -132,6 +132,10 @@ foreach(dir ${OSX_EXTRA_LIBRARY_PATH})
+   target_link_libraries(${this} PRIVATE "-Xlinker -rpath -Xlinker ${dir}")
+ endforeach()
+ 
++if (SUPPORT_FOR_MPI_ALLOC_MEM_CPTR)
++  target_compile_definitions(${this} PRIVATE SUPPORT_FOR_MPI_ALLOC_MEM_CPTR)
++endif ()
++
+ ecbuild_add_executable (
+    TARGET pfio_open_close.x
+    SOURCES pfio_open_close.F90
+diff --git a/pfio/DirectoryService.F90 b/pfio/DirectoryService.F90
+index c8970d181e..76f90f0f62 100644
+--- a/pfio/DirectoryService.F90
++++ b/pfio/DirectoryService.F90
+@@ -40,7 +40,7 @@ module pFIO_DirectoryServiceMod
+    integer, parameter :: DISCOVERY_TAG = 1 ! Exchange of _root_ rank between client and server
+    integer, parameter :: NPES_TAG = 2  ! Client sends number of pes in client to server  (on roots)
+    integer, parameter :: RANKS_TAG = 3 ! Client sends ranks of client processes to server (on roots)
+-   integer, parameter :: CONNECT_TAG = 3 ! client and server individual processes exchange ranks 
++   integer, parameter :: CONNECT_TAG = 3 ! client and server individual processes exchange ranks
+ 
+    type :: DirectoryEntry
+       sequence
+@@ -90,7 +90,7 @@ contains
+       integer, intent(in) :: comm
+       class (KeywordEnforcer), optional, intent(in) :: unusable
+       integer, optional, intent(out) :: rc
+-      
++
+       integer :: ierror
+       type (Directory) :: empty_dir
+ 
+@@ -118,7 +118,7 @@ contains
+       _UNUSED_DUMMY(unusable)
+    end function new_DirectoryService
+ 
+-   
++
+    integer function make_directory_window(comm, addr) result(win)
+       integer, intent(in) :: comm
+       type (c_ptr), intent(out) :: addr
+@@ -126,13 +126,21 @@ contains
+       type (Directory), pointer :: dir
+       type (Directory), target  :: dirnull
+       integer(kind=MPI_ADDRESS_KIND) :: sz
++#if !defined (SUPPORT_FOR_MPI_ALLOC_MEM_CPTR)
++      integer(kind=MPI_ADDRESS_KIND) :: baseaddr
++#endif
+       integer :: ierror, rank
+ 
+       call MPI_Comm_Rank(comm, rank, ierror)
+ 
+       if (rank == 0)  then
+          sz = sizeof_directory()
++#if defined(SUPPORT_FOR_MPI_ALLOC_MEM_CPTR)
+          call MPI_Alloc_mem(sz, MPI_INFO_NULL, addr, ierror)
++#else
++         call MPI_Alloc_mem(sz, MPI_INFO_NULL, baseaddr, ierror)
++         addr = transfer(baseaddr, addr)
++#endif
+          call c_f_pointer(addr, dir)
+       else
+          sz  = 0
+@@ -142,7 +150,7 @@ contains
+       call MPI_Win_create(dir, sz, 1, MPI_INFO_NULL, comm, win, ierror)
+ 
+    end function make_directory_window
+-   
++
+    subroutine connect_to_server(this, port_name, client, client_comm, unusable, server_size, rc)
+       use pFIO_ClientThreadMod
+       class (DirectoryService), target, intent(inout) :: this
+@@ -170,7 +178,7 @@ contains
+       integer :: server_npes
+       integer, allocatable :: client_ranks(:)
+       integer, allocatable :: server_ranks(:)
+-      
++
+       class(ServerThread), pointer :: server_thread_ptr
+       class(BaseServer), pointer :: server_ptr
+ 
+@@ -225,7 +233,7 @@ contains
+             call MPI_Comm_rank(this%comm, dir_entry%partner_root_rank, ierror) ! global comm
+ 
+             dir%entries(n) = dir_entry
+-         
++
+             call this%put_directory(dir, this%win_client_directory)
+          end if
+ 
+@@ -261,7 +269,7 @@ contains
+       call MPI_Scatter(server_ranks, 1, MPI_INTEGER, &
+         & server_rank, 1, MPI_INTEGER, &
+         & 0, client_comm, ierror)
+-     
++
+       if (present(server_size)) call MPI_Bcast(server_size, 1, MPI_INTEGER, 0, client_comm,ierror)
+ 
+       ! Construct the connection
+@@ -339,7 +347,7 @@ contains
+          end if
+ 
+          call this%mutex%release()
+-      
++
+          if (found) then
+             call MPI_Send(this%rank, 1, MPI_INTEGER, client_root_rank, DISCOVERY_TAG, this%comm, ierror)
+          else
+@@ -416,11 +424,11 @@ contains
+       type(PortInfo),target, intent(in) :: port
+       class (BaseServer), intent(inout) :: server
+       integer, optional, intent(out) :: rc
+-      character(len=MAX_LEN_PORT_NAME) :: port_name 
++      character(len=MAX_LEN_PORT_NAME) :: port_name
+       integer :: ierror
+       integer :: rank_in_server
+       integer :: n
+-      
++
+ 
+       type (Directory) :: dir
+       type (DirectoryEntry) :: dir_entry
+@@ -462,7 +470,7 @@ contains
+ 
+          n = dir%num_entries + 1
+          dir%num_entries = n
+-         
++
+          dir_entry%port_name = port_name
+          dir_entry%partner_root_rank = this%rank
+          dir%entries(n) = dir_entry
+@@ -476,14 +484,14 @@ contains
+ 
+    function sizeof_directory() result(sz)
+       integer :: sz
+-      
++
+       integer :: sizeof_char, sizeof_integer, sizeof_DirectoryEntry
+       integer :: one_integer
+       character :: one_char
+ 
+       sizeof_integer = c_sizeof(one_integer)
+       sizeof_char    = c_sizeof(one_char)
+-      
++
+       sizeof_DirectoryEntry = MAX_LEN_PORT_NAME*sizeof_char + 1*sizeof_integer
+       sz = sizeof_integer + MAX_NUM_PORTS*sizeof_DirectoryEntry
+    end function sizeof_directory
+@@ -522,7 +530,7 @@ contains
+       return
+       _UNUSED_DUMMY(this)
+    end function get_directory
+-      
++
+ 
+    subroutine put_directory(this, dir, win)
+       class (DirectoryService), intent(in) :: this
+@@ -544,7 +552,7 @@ contains
+       return
+       _UNUSED_DUMMY(this)
+    end subroutine put_directory
+-      
++
+    subroutine terminate_servers(this, client_comm, rc)
+       class (DirectoryService), intent(inout) :: this
+       integer ,intent(in) :: client_comm
+@@ -552,13 +560,13 @@ contains
+ 
+       type (Directory) :: dir
+       integer :: ierror, rank_in_client,i
+-      
++
+       call MPI_Comm_rank(client_comm, rank_in_client, ierror)
+ 
+       call MPI_BARRIER(client_comm,ierror)
+ 
+       if (rank_in_client ==0) then
+-         
++
+          write(6,*)"client0 terminates servers"; flush(6)
+ 
+          dir = this%get_directory(this%win_server_directory)
+diff --git a/pfio/MpiMutex.F90 b/pfio/MpiMutex.F90
+index 7a8b192ef9..f80e20b12a 100644
+--- a/pfio/MpiMutex.F90
++++ b/pfio/MpiMutex.F90
+@@ -40,6 +40,9 @@ contains
+ 
+       integer :: ierror
+       integer(kind=MPI_ADDRESS_KIND) :: sz
++#if !defined (SUPPORT_FOR_MPI_ALLOC_MEM_CPTR)
++      integer(kind=MPI_ADDRESS_KIND) :: baseaddr
++#endif
+ 
+       call MPI_Comm_dup(comm, lock%comm, ierror)
+       call MPI_Comm_rank(lock%comm, lock%rank, ierror)
+@@ -62,10 +65,15 @@ contains
+          block
+            logical, pointer :: scratchpad(:)
+            integer :: sizeof_logical
+-          
++
+            call MPI_Type_extent(MPI_LOGICAL, sizeof_logical, ierror)
+            sz = lock%npes * sizeof_logical
++#if defined(SUPPORT_FOR_MPI_ALLOC_MEM_CPTR)
+            call MPI_Alloc_mem(sz, MPI_INFO_NULL, lock%locks_ptr, ierror)
++#else
++           call MPI_Alloc_mem(sz, MPI_INFO_NULL, baseaddr, ierror)
++           lock%locks_ptr = transfer(baseaddr, lock%locks_ptr)
++#endif
+ 
+            call c_f_pointer(lock%locks_ptr, scratchpad, [lock%npes])
+            scratchpad = .false.
+@@ -145,7 +153,7 @@ contains
+               end if
+            end do
+         end if
+-        
++
+         if (next_rank /= -1) then
+            call MPI_Send(buffer, 0, MPI_LOGICAL, next_rank, &
+                 & LOCK_TAG, this%comm, ierror)
+diff --git a/pfio/RDMAReference.F90 b/pfio/RDMAReference.F90
+index 5fa0aedc7b..c54cc8a2da 100644
+--- a/pfio/RDMAReference.F90
++++ b/pfio/RDMAReference.F90
+@@ -16,8 +16,8 @@ module pFIO_RDMAReferenceMod
+    public :: RDMAReference
+ 
+    type,extends(AbstractDataReference) :: RDMAReference
+-      integer :: win         
+-      integer :: comm 
++      integer :: win
++      integer :: comm
+       integer :: mem_rank
+       integer(kind=INT64) :: msize_word
+       logical :: RDMA_allocated = .false.
+@@ -106,7 +106,7 @@ contains
+       _VERIFY(status)
+       _RETURN(_SUCCESS)
+    end subroutine deserialize
+-      
++
+    subroutine allocate(this, rc)
+       class (RDMAReference), intent(inout) :: this
+       integer, optional, intent(out) :: rc
+@@ -114,22 +114,32 @@ contains
+       integer :: disp_unit,status, Rank
+       integer(kind=MPI_ADDRESS_KIND) :: n_bytes
+       integer :: int_size
+-      
++#if !defined (SUPPORT_FOR_MPI_ALLOC_MEM_CPTR)
++      integer(kind=MPI_ADDRESS_KIND) :: baseaddr
++#endif
++
+       int_size   = c_sizeof(int_size)
+       disp_unit  = int_size
+       n_bytes    = this%msize_word * int_size
+ 
+       call MPI_Comm_rank(this%comm,Rank,status)
+ 
+-      windowsize = 0_MPI_ADDRESS_KIND  
++      windowsize = 0_MPI_ADDRESS_KIND
+       if (Rank == this%mem_rank) windowsize = n_bytes
+-   
++
++#if defined (SUPPORT_FOR_MPI_ALLOC_MEM_CPTR)
+       call MPI_Win_allocate(windowsize, disp_unit, MPI_INFO_NULL, this%comm, &
+                this%base_address, this%win, status)
+       _VERIFY(status)
++#else
++      call MPI_Win_allocate(windowsize, disp_unit, MPI_INFO_NULL, this%comm, &
++               baseaddr, this%win, status)
++      _VERIFY(status)
++      this%base_address = transfer(baseaddr, this%base_address)
++#endif
+       call MPI_Win_fence(0, this%win, status)
+       _VERIFY(status)
+-     
++
+       this%RDMA_allocated = .true.
+       _RETURN(_SUCCESS)
+    end subroutine allocate
+diff --git a/pfio/ShmemReference.F90 b/pfio/ShmemReference.F90
+index 97c6e1c114..c15f6d1347 100644
+--- a/pfio/ShmemReference.F90
++++ b/pfio/ShmemReference.F90
+@@ -73,7 +73,7 @@ contains
+ 
+       if(allocated(buffer)) deallocate(buffer)
+       allocate(buffer(this%get_length()))
+-      
++
+       call this%serialize_base(tmp_buff, rc=status)
+       _VERIFY(status)
+       n = this%get_length_base()
+@@ -103,7 +103,7 @@ contains
+       _VERIFY(status)
+       _RETURN(_SUCCESS)
+    end subroutine deserialize
+-      
++
+    subroutine allocate(this, rc)
+       class (ShmemReference), intent(inout) :: this
+       integer, optional, intent(out) :: rc
+@@ -111,22 +111,36 @@ contains
+       integer(kind=MPI_ADDRESS_KIND) :: windowsize
+       integer :: disp_unit,ierr, InNode_Rank
+       integer(kind=MPI_ADDRESS_KIND) :: n_bytes
++#if !defined (SUPPORT_FOR_MPI_ALLOC_MEM_CPTR)
++      integer(kind=MPI_ADDRESS_KIND) :: baseaddr
++#endif
+ 
+       n_bytes =  this%msize_word * 4_MPI_ADDRESS_KIND
+ 
+       call MPI_Comm_rank(this%InNode_Comm,InNode_Rank,ierr)
+ 
+       disp_unit  = 1
+-      windowsize = 0_MPI_ADDRESS_KIND  
++      windowsize = 0_MPI_ADDRESS_KIND
+       if (InNode_Rank == 0) windowsize = n_bytes
+-   
++
++#if defined(SUPPORT_FOR_MPI_ALLOC_MEM_CPTR)
+       call MPI_Win_allocate_shared(windowsize, disp_unit, MPI_INFO_NULL, this%InNode_Comm, &
+                this%base_address, this%win, ierr)
++#else
++      call MPI_Win_allocate_shared(windowsize, disp_unit, MPI_INFO_NULL, this%InNode_Comm, &
++               baseaddr, this%win, ierr)
++      this%base_address = transfer(baseaddr, this%base_address)
++#endif
+ 
+       if (InNode_Rank /= 0)  then
++#if defined(SUPPORT_FOR_MPI_ALLOC_MEM_CPTR)
+           call MPI_Win_shared_query(this%win, 0, windowsize, disp_unit, this%base_address,ierr)
++#else
++          call MPI_Win_shared_query(this%win, 0, windowsize, disp_unit, baseaddr,ierr)
++          this%base_address = transfer(baseaddr, this%base_address)
++#endif
+       endif
+-     
++
+       this%shmem_allocated = .true.
+       _RETURN(_SUCCESS)
+    end subroutine allocate
+-- 
+2.32.0 (Apple Git-132)
+

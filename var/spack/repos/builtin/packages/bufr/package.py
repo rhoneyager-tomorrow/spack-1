@@ -17,10 +17,13 @@ class Bufr(CMakePackage):
     """
 
     homepage = "https://noaa-emc.github.io/NCEPLIBS-bufr"
-    url = "https://github.com/NOAA-EMC/NCEPLIBS-bufr/archive/refs/tags/bufr_v11.5.0.tar.gz"
+    url = "https://github.com/NOAA-EMC/NCEPLIBS-bufr/archive/refs/tags/v12.0.1.tar.gz"
+    git = "https://github.com/NOAA-EMC/NCEPLIBS-bufr"
 
-    maintainers("t-brown", "AlexanderRichert-NOAA", "edwardhartnett", "Hang-Lei-NOAA", "jbathegit")
+    maintainers("AlexanderRichert-NOAA", "edwardhartnett", "Hang-Lei-NOAA", "jbathegit")
 
+    version("develop", branch="develop")
+    version("12.0.1", sha256="525f26238dba6511a453fc71cecc05f59e4800a603de2abbbbfb8cbb5adf5708")
     version("12.0.0", sha256="d01c02ea8e100e51fd150ff1c4a1192ca54538474acb1b7f7a36e8aeab76ee75")
     version("11.7.1", sha256="6533ce6eaa6b02c0cb5424cfbc086ab120ccebac3894980a4daafd4dfadd71f8")
     version("11.7.0", sha256="6a76ae8e7682bbc790321bf80c2f9417775c5b01a5c4f10763df92e01b20b9ca")
@@ -33,19 +36,24 @@ class Bufr(CMakePackage):
     # C test does not explicity link to -lm causing DSO error when building shared libs
     patch("c-tests-libm.patch", when="@11.5.0:11.7.0")
     # Patch to identify Python version correctly
-    patch("python-version.patch", when="+python")
+    patch("python-version.patch", when="@11.5:12.0.0 +python")
 
-    variant("python", default=False, description="Enable Python interface?")
+    variant("python", default=False, description="Enable Python interface")
     variant("shared", default=True, description="Build shared libraries", when="@11.5:")
-    variant("tests", default=False, description="Build tests")
 
     extends("python", when="+python")
 
     depends_on("python@3:", type=("build", "run"), when="+python")
     depends_on("py-setuptools", type="build", when="+python")
-    depends_on("py-numpy", type="build", when="+python")
+    depends_on("py-numpy", type=("build", "run"), when="+python")
     depends_on("py-pip", type="build", when="+python")
     depends_on("py-wheel", type="build", when="+python")
+
+    def url_for_version(self, version):
+        pre = "bufr_" if version < Version("12.0.1") else ""
+        return (
+            f"https://github.com/NOAA-EMC/NCEPLIBS-bufr/archive/refs/tags/{pre}v{version}.tar.gz"
+        )
 
     # Need to make the lines shorter at least on some systems
     def patch(self):
@@ -56,7 +64,7 @@ class Bufr(CMakePackage):
         args = [
             self.define_from_variant("ENABLE_PYTHON", "python"),
             self.define_from_variant("BUILD_SHARED_LIBS", "shared"),
-            self.define_from_variant("BUILD_TESTS", "tests"),
+            self.define("BUILD_TESTS", self.run_tests),
         ]
 
         return args
@@ -97,7 +105,7 @@ class Bufr(CMakePackage):
 
         if self.spec.satisfies("+python"):
             pyver = self.spec["python"].version.up_to(2)
-            pydir = os.path.join(os.path.dirname(lib[0]), "python%s/site-packages" % pyver)
+            pydir = join_path(os.path.dirname(lib[0]), f"python{pyver}", "site-packages")
             env.prepend_path("PYTHONPATH", pydir)
 
     def setup_run_environment(self, env):
@@ -106,3 +114,8 @@ class Bufr(CMakePackage):
             suffixes += ["8", "d"]
         for suffix in suffixes:
             self._setup_bufr_environment(env, suffix)
+
+    def check(self):
+        if self.spec.satisfies("~python"):
+            with working_dir(self.builder.build_directory):
+                make("test")

@@ -14,6 +14,7 @@ class Ioda(CMakePackage):
 
     maintainers = ["climbfuji"]
 
+    version('2.7.0', commit='ee35b7f7f859b78e823b69d72b4bc230b15f3d46')
     version('2.6.0', commit='26abb62ca8d30cc7b84303c4d780f0f253b287c9')
     version('develop', branch='develop', no_cache=True)
 
@@ -42,6 +43,7 @@ class Ioda(CMakePackage):
     depends_on('oops+openmp', when='+openmp')
     depends_on('oops~openmp', when='~openmp')
     depends_on('oops@1.7.0', when='@2.6.0')
+    depends_on('oops@1.8.0', when='@2.7.0')
     depends_on('python@3.7:')
     depends_on('py-pybind11')
     depends_on('udunits@2.2.0:')

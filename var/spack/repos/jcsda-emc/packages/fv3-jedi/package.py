@@ -15,6 +15,7 @@ class Fv3Jedi(CMakePackage):
     maintainers = ["climbfuji"]
 
     version('develop', branch='develop', no_cache=True)
+    version('1.7.0', commit='75fa0544ae7c6b5446460bef8cb7663f3fe1acad')
     version('1.6.0', commit='3c20ebd2657d4b8df35103207a1e83535b67469c')
 
     variant(
@@ -42,13 +43,13 @@ class Fv3Jedi(CMakePackage):
     # Required components
     depends_on('crtm')
     depends_on('crtm@2.2.3:', when='@:1.5.0')
-    #depends_on('crtm@v3.0.0-skylabv5-1', when='@1.6.0')
+    depends_on('crtm@v3.0.0-skylabv5-1', when='@1.6.0')
+    depends_on('crtm@v3.0.0-skylabv6', when='@1.7.0')
     depends_on('ecbuild', type=('build'))
     depends_on('ecbuild@3.3.2:', type=('build'), when='@1.6.0')
     depends_on('ecmwf-atlas')
     depends_on('ecmwf-atlas@0.33.0', when='@1.6.0')
     depends_on('femps@1.0.0:')
-    depends_on('fv3-jedi-linearmodel@1.0.0:')
     depends_on('jedi-cmake', type=('build'))
     depends_on('mpi')
     # fv3-jedi depends on netcdf-fortran, which always depends on netcdf-c. However, netcdf-c
@@ -57,19 +58,24 @@ class Fv3Jedi(CMakePackage):
     depends_on('netcdf-c+mpi')
     depends_on('oops')
     depends_on('oops@1.7.0', when='@1.6.0')
+    depends_on('oops@1.8.0', when='@1.7.0')
     depends_on('saber')
     depends_on('saber@1.7.0', when='@1.6.0')
+    depends_on('saber@1.8.0', when='@1.7.0')
     depends_on('ufo')
     depends_on('ufo@1.7.0', when='@1.6.0')
+    depends_on('ufo@1.8.0', when='@1.7.0')
     depends_on('vader')
     depends_on('vader@1.4.0', when='@1.6.0')
+    depends_on('vader@1.5.0', when='@1.7.0')
 
     depends_on('fms', when='forecast_model=FV3CORE')
+    depends_on('fv3-jedi-linearmodel@1.0.0:', when='forecast_model=FV3CORE')
 
     # Optional components
     depends_on('GFDL_atmos_cubed_sphere', when='forecast_model=FV3CORE')
     depends_on('gsibec', when='+gsibec')
-    depends_on('gsibec@1.1.2:', when='@1.6.0 +gsibec')
+    depends_on('gsibec@1.1.2:', when='@1.6:1.7 +gsibec')
     depends_on('llvm-openmp', when='+openmp %apple-clang', type=('build', 'run'))
     depends_on('sp', when='+sp')
 
@@ -81,10 +87,10 @@ class Fv3Jedi(CMakePackage):
         return res
 
     # find_package(ecbuild REQUIRED) is needed when using ecbuild.
-    patch('CMakeLists.txt.patch', when='@1.6.0')
+    patch('CMakeLists.txt.patch', when='@1.6:1.7')
     # fv3-jedi is improperly including git_functions.cmake by searching for an environment variable.
     # It should instead use the jedicmake_FUNCTIONS variable, which is deliberately exported by jedi-cmake.
-    patch('test.CMakeLists.txt.patch', when='@1.6.0')
+    patch('test.CMakeLists.txt.patch', when='@1.6:1.7')
     # fv3-jedi depends on these macros that are defined (and not exported) in ufo.
-    patch('cmake.fv3jedi_extra_macros.cmake.patch', when='@1.6.0')
+    patch('cmake.fv3jedi_extra_macros.cmake.patch', when='@1.6:1.7')
 

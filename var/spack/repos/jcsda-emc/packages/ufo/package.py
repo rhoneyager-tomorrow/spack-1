@@ -14,6 +14,7 @@ class Ufo(CMakePackage):
 
     maintainers = ["climbfuji"]
 
+    version('1.8.0', commit='7f7b65bf70e795c4ad02175b606cb18fe5dd4388')
     version('1.7.0', commit='1d745701806bd2a3f3d194c9de87ea7ca0a4c2ab')
     version('develop', branch='develop', no_cache=True)
 
@@ -37,22 +38,25 @@ class Ufo(CMakePackage):
     depends_on('ecbuild', type=('build'))
     depends_on('ecbuild@3.3.2:', type=('build'), when='@1.7.0:')
     depends_on('eckit')
-    depends_on('eckit@1.23.0', when='@1.7.0')
+    depends_on('eckit@1.23.0', when='@1.7:1.8')
     depends_on('eigen')
     depends_on('fckit')
-    depends_on('fckit@0.10.1', when='@1.7.0')
+    depends_on('fckit@0.10.1', when='@1.7:1.8')
     depends_on('gsl-lite')
     depends_on('ioda')
     depends_on('ioda@2.6.0', when='@1.7.0')
+    depends_on('ioda@2.7.0', when='@1.8.0')
     depends_on('jedi-cmake', type=('build'))
     depends_on('mpi')
     depends_on('netcdf-c+mpi')
     depends_on('netcdf-fortran')
     depends_on('oops')
     depends_on('oops@1.7.0', when='@1.7.0')
+    depends_on('oops@1.8.0', when='@1.8.0')
 
     depends_on('crtm', when='+crtm')
     depends_on('crtm@v3.0.0-skylabv5-1', when='@1.7.0 +crtm')
+    depends_on('crtm@v3.0.0-skylabv6', when='@1.8.0 +crtm')
 
     #depends_on('geos-aero', when='+geos-aero')
     #depends_on('geos-aero@0.0.0', when='@1.7.0 +geos-aero')

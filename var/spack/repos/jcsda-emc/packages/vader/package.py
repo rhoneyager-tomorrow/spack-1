@@ -14,6 +14,7 @@ class Vader(CMakePackage):
 
     maintainers = ["climbfuji"]
 
+    version('1.5.0', commit='17173dc97a727e623e4b54ee06e2a0dc71f643de')
     version('1.4.0', commit='4264b56111a62ab1339320ad85a7f715b923df47')
     version('develop', branch='develop', no_cache=True)
 
@@ -25,4 +26,5 @@ class Vader(CMakePackage):
     depends_on('netcdf-fortran')
     depends_on('oops')
     depends_on('oops@1.7.0', when='@1.4.0')
+    depends_on('oops@1.8.0', when='@1.5.0')
 

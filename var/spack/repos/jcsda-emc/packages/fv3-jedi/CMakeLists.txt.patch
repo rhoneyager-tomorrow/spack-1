@@ -1,11 +1,11 @@
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -9,6 +9,8 @@
+--- a/CMakeLists.txt	2023-10-12 11:36:48
++++ b/CMakeLists.txt	2023-10-12 11:37:13
+@@ -17,6 +17,8 @@
  
- cmake_minimum_required( VERSION 3.3.2 FATAL_ERROR )
+ set( CMAKE_DIRECTORY_LABELS "fv3-jedi" )
  
 +find_package( ecbuild 3.6 REQUIRED HINTS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../ecbuild)
 +
- project( fv3jedi VERSION 1.6.0 LANGUAGES C CXX Fortran )
- 
- option(OPENMP "Build fv3-jedi with OpenMP support" ON)
+ set( ECBUILD_DEFAULT_BUILD_TYPE Release )
+ set( ENABLE_OS_TESTS           OFF CACHE BOOL "Disable OS tests" FORCE )
+ set( ENABLE_LARGE_FILE_SUPPORT OFF CACHE BOOL "Disable testing of large file support" FORCE )

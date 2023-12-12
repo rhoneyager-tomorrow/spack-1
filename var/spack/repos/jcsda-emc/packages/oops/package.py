@@ -14,6 +14,7 @@ class Oops(CMakePackage):
 
     maintainers = ["climbfuji"]
 
+    version('1.8.0', commit='d9c7c74e4597172bf8a69d8585df5ad6d0112e0c')
     version('1.7.0', commit='2426c2040e9ae138c4bf8362cacca84d66bd64bf')
     version('develop', branch='develop', no_cache=True)
 
@@ -24,16 +25,16 @@ class Oops(CMakePackage):
     #variant('autoprofiling', default=False, description='Enable function-based autoprofiling with GPTL (if available)')
     #variant('gptl', default=False, description='Use GPTL profiling library (if available)')
 
-    depends_on('boost')
+    depends_on('boost@1.64:')
     depends_on('ecbuild', type=('build'))
-    depends_on('ecbuild@3.3.2:', type=('build'), when='@1.7.0')
+    depends_on('ecbuild@3.3.2:', type=('build'), when='@1.7:1.8')
     depends_on('eckit')
-    depends_on('eckit@1.23.0', when='@1.7.0')
+    depends_on('eckit@1.23.0', when='@1.7:1.8')
     depends_on('ecmwf-atlas')
-    depends_on('ecmwf-atlas@0.33.0', when='@1.7.0')
+    depends_on('ecmwf-atlas@0.33.0', when='@1.7:1.8')
     depends_on('eigen')
     depends_on('fckit')
-    depends_on('fckit@0.10.1', when='@1.7.0')
+    depends_on('fckit@0.10.1', when='@1.7:1.8')
     #depends_on('gptl', when='+gptl')
     depends_on('jedi-cmake', type=('build'))
     depends_on('lapack', when='~mkl')

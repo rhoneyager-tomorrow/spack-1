@@ -14,9 +14,8 @@ class Gsw(CMakePackage):
 
     maintainers = ["climbfuji"]
 
-    depends_on('ecbuild', type=('build'))
-    depends_on('ecbuild@3.3.2:', type=('build'), when='@3.0.7:')
+    depends_on("ecbuild", type=("build"))
+    depends_on("ecbuild@3.3.2:", type=("build"), when="@3.0.7:")
 
-    version('3.0.7', commit='1a02ebaf6f7a4e9f2c2d2dd973fb050e697bcc74')
-    version('develop', branch='develop', no_cache=True)
-
+    version("3.0.7", commit="1a02ebaf6f7a4e9f2c2d2dd973fb050e697bcc74")
+    version("develop", branch="develop", no_cache=True)

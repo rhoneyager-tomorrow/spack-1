@@ -14,9 +14,9 @@ class Fv3JediLinearmodel(CMakePackage):
 
     maintainers = ["climbfuji"]
 
-    version('1.3.0', commit='9758fbd44166fc1e1d745ca9ab7e9e5e6071955f')
-    version('1.2.0', commit='d47cea97c659e8a11e9e64c23092bef06227ebde')
-    version('develop', branch='develop', no_cache=True)
+    version("1.3.0", commit="9758fbd44166fc1e1d745ca9ab7e9e5e6071955f")
+    version("1.2.0", commit="d47cea97c659e8a11e9e64c23092bef06227ebde")
+    version("develop", branch="develop", no_cache=True)
 
     variant(
         "forecast_model",
@@ -28,25 +28,25 @@ class Fv3JediLinearmodel(CMakePackage):
     # These options just turn on a find_package call. If a package is already found, for example by
     # one of the package dependencies, then that component is silently used even if the user toggles
     # it off. This is a bug and should be fixed eventually.
-    variant('mkl', default=False, description='Use MKL for LAPACK implementation (if available)')
-    variant('mpi', default=True, description='Support for MPI distributed parallelism')
-    variant('openmp', default=True, description='Build with OpenMP support')
+    variant("mkl", default=False, description="Use MKL for LAPACK implementation (if available)")
+    variant("mpi", default=True, description="Support for MPI distributed parallelism")
+    variant("openmp", default=True, description="Build with OpenMP support")
 
-    conflicts('forecast_model=GEOS', msg='FV3-JEDI-LINEARMODEL: GEOS to be implemented.')
-    conflicts('forecast_model=UFS', msg='FV3-JEDI-LINEARMODEL: UFS to be implemented.')
+    conflicts("forecast_model=GEOS", msg="FV3-JEDI-LINEARMODEL: GEOS to be implemented.")
+    conflicts("forecast_model=UFS", msg="FV3-JEDI-LINEARMODEL: UFS to be implemented.")
 
-    depends_on('ecbuild', type=('build'))
-    depends_on('ecbuild@3.3.2:', type=('build'), when='@1.7.0:')
-    depends_on('fms@release-jcsda', when='forecast_model=FV3CORE')
-    depends_on('fms@release-jcsda', when='forecast_model=UFS')
-    depends_on('jedi-cmake', type=('build'))
-    depends_on('lapack', when='~mkl')
-    depends_on('llvm-openmp', when='+openmp %apple-clang', type=('build', 'run'))
-    depends_on('mkl', when='+mkl')
-    depends_on('mpi', when='+mpi')
-    depends_on('netcdf-fortran')
-    depends_on('netcdf-c~mpi', when='~mpi')
-    depends_on('netcdf-c+mpi', when='+mpi')
+    depends_on("ecbuild", type=("build"))
+    depends_on("ecbuild@3.3.2:", type=("build"), when="@1.7.0:")
+    depends_on("fms@release-jcsda", when="forecast_model=FV3CORE")
+    depends_on("fms@release-jcsda", when="forecast_model=UFS")
+    depends_on("jedi-cmake", type=("build"))
+    depends_on("lapack", when="~mkl")
+    depends_on("llvm-openmp", when="+openmp %apple-clang", type=("build", "run"))
+    depends_on("mkl", when="+mkl")
+    depends_on("mpi", when="+mpi")
+    depends_on("netcdf-fortran")
+    depends_on("netcdf-c~mpi", when="~mpi")
+    depends_on("netcdf-c+mpi", when="+mpi")
 
     # Future: GEOS needs
     # - MAPL (underway at GMAO)
@@ -62,13 +62,10 @@ class Fv3JediLinearmodel(CMakePackage):
     # - FMS::fms_r8
 
     def cmake_args(self):
-        res = [
-            self.define_from_variant('FV3_FORECAST_MODEL', 'forecast_model')
-        ]
+        res = [self.define_from_variant("FV3_FORECAST_MODEL", "forecast_model")]
         return res
 
     # find_package(ecbuild REQUIRED) is needed when using ecbuild.
-    patch('CMakeLists.txt.patch', when='@1.2:1.3')
+    patch("CMakeLists.txt.patch", when="@1.2:1.3")
     # fv3-jedi-linearmodel needs to install its Fortran modules.
-    patch('src.CMakeLists.txt.patch', when='@1.2:1.3')
-
+    patch("src.CMakeLists.txt.patch", when="@1.2:1.3")

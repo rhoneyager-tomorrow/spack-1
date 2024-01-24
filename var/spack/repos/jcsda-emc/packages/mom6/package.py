@@ -20,7 +20,7 @@ class Mom6(CMakePackage):
 
     depends_on("ecbuild", type=("build"))
     depends_on("ecbuild@3.3.2:", type=("build"), when="@1.7.0:")
-    #depends_on("fms@2020.4.0:")
+    # depends_on("fms@2020.4.0:")
     depends_on("fms@release-jcsda")
     depends_on("gsw@3.0.5:")
     depends_on("llvm-openmp", when="%apple-clang", type=("build", "link", "run"))

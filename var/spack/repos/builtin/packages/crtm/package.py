@@ -59,7 +59,8 @@ class Crtm(CMakePackage):
     version(
         "v3.1.0-skylabv7",
         url="https://www.github.com/JCSDA/crtmv3/tarball/90d52eec1f97bb5a098c9834c4499a17de4ff35b",
-        sha256="0751ddad9a0304e62902a11faa1e693b84ad2b338512f8d2c1a03e5cc573a947")
+        sha256="0751ddad9a0304e62902a11faa1e693b84ad2b338512f8d2c1a03e5cc573a947",
+    )
     version(
         "v3.0.0-skylabv6",
         url="https://www.github.com/JCSDA/crtmv3/tarball/a31ed458fb702b235bccbe1693d2badffb241d05",

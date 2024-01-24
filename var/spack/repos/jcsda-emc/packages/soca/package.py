@@ -56,4 +56,4 @@ class Soca(CMakePackage):
     depends_on("vader@1.5", when="@1.6")
     depends_on("vader@1.6", when="@1.7")
 
-    #depends_on("icepack", when="+icepack")
+    # depends_on("icepack", when="+icepack")

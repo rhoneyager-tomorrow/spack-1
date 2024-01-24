@@ -14,6 +14,7 @@ class Oops(CMakePackage):
 
     maintainers = ["climbfuji"]
 
+    version("1.9.1", commit="60f93924fe446714fcb04d96f6930a760db74b23")
     version("1.8.0", commit="d9c7c74e4597172bf8a69d8585df5ad6d0112e0c")
     version("1.7.0", commit="2426c2040e9ae138c4bf8362cacca84d66bd64bf")
     version("develop", branch="develop", no_cache=True)
@@ -31,21 +32,24 @@ class Oops(CMakePackage):
     depends_on("ecbuild@3.3.2:", type=("build"), when="@1.7:1.8")
     depends_on("eckit")
     depends_on("eckit@1.23.0", when="@1.7:1.8")
+    depends_on("eckit@1.24.4:", when="@1.9:")
     depends_on("ecmwf-atlas")
     depends_on("ecmwf-atlas@0.33.0", when="@1.7:1.8")
+    depends_on("ecmwf-atlas@0.35.0:", when="@1.9:")
     depends_on("eigen")
     depends_on("fckit")
     depends_on("fckit@0.10.1", when="@1.7:1.8")
+    depends_on("fckit@0.11.0:", when="@1.9:")
     # depends_on('gptl', when='+gptl')
     depends_on("jedi-cmake", type=("build"))
     depends_on("lapack", when="~mkl")
+    depends_on("llvm-openmp", when="+openmp %apple-clang", type=("build", "link", "run"))
     depends_on("mkl", when="+mkl")
     depends_on("mpi")
     depends_on("netcdf-c+mpi")
     depends_on("netcdf-fortran")
     depends_on("nlohmann-json")
     depends_on("nlohmann-json-schema-validator")
-    depends_on("llvm-openmp", when="+openmp %apple-clang", type=("build", "run"))
 
     def cmake_args(self):
         res = [

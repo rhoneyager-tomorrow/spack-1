@@ -20,6 +20,7 @@ class EcmwfAtlas(CMakePackage):
 
     version("master", branch="master")
     version("develop", branch="develop")
+    version("0.36.0", sha256="39bf748aa7b22df80b9791fbb6b4351ed9a9f85587b58fc3225314278a2a68f8")
     version("0.35.1", sha256="7a344aaa8a1378d989a7bb883eb741852c5fa494630be6d8c88e477e4b9c5be1")
     version("0.35.0", sha256="5a4f898ffb4a33c738b6f86e4e2a4c8e26dfd56d3c3399018081487374e29e97")
     version("0.34.0", sha256="48536742cec0bc268695240843ac0e232e2b5142d06b19365688d9ea44dbd9ba")
@@ -29,6 +30,7 @@ class EcmwfAtlas(CMakePackage):
     version("0.31.0", sha256="fa4ff8665544b8e19f79d171c540a9ca8bfc4127f52a3c4d4d618a2fe23354d7")
 
     depends_on("ecbuild", type=("build"))
+    depends_on("ecbuild@3.4:", type=("build"), when="@0.36.0:")
     depends_on("eckit@:1.23", when="@:0.33")
     depends_on("eckit@1.24:", when="@0.34:")
     depends_on("boost cxxstd=14 visibility=hidden", when="@0.26.0:0.33.99", type=("build", "run"))

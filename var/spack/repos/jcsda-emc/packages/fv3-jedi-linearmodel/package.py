@@ -14,6 +14,7 @@ class Fv3JediLinearmodel(CMakePackage):
 
     maintainers = ["climbfuji"]
 
+    version("1.4.0", commit="05cc1ae63252ca535f3db0fdca9a8a996329fc8f")
     version("1.3.0", commit="9758fbd44166fc1e1d745ca9ab7e9e5e6071955f")
     version("1.2.0", commit="d47cea97c659e8a11e9e64c23092bef06227ebde")
     version("develop", branch="develop", no_cache=True)
@@ -41,7 +42,7 @@ class Fv3JediLinearmodel(CMakePackage):
     depends_on("fms@release-jcsda", when="forecast_model=UFS")
     depends_on("jedi-cmake", type=("build"))
     depends_on("lapack", when="~mkl")
-    depends_on("llvm-openmp", when="+openmp %apple-clang", type=("build", "run"))
+    depends_on("llvm-openmp", when="+openmp %apple-clang", type=("build", "link", "run"))
     depends_on("mkl", when="+mkl")
     depends_on("mpi", when="+mpi")
     depends_on("netcdf-fortran")
@@ -66,6 +67,6 @@ class Fv3JediLinearmodel(CMakePackage):
         return res
 
     # find_package(ecbuild REQUIRED) is needed when using ecbuild.
-    patch("CMakeLists.txt.patch", when="@1.2:1.3")
+    patch("CMakeLists.txt.patch", when="@1.2:1.4")
     # fv3-jedi-linearmodel needs to install its Fortran modules.
-    patch("src.CMakeLists.txt.patch", when="@1.2:1.3")
+    patch("src.CMakeLists.txt.patch", when="@1.2:1.4")

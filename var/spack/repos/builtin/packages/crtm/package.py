@@ -38,6 +38,7 @@ class Crtm(CMakePackage):
     depends_on("netcdf-fortran", when="@v3.0.0-skylabv5")
     depends_on("netcdf-fortran", when="@v3.0.0-skylabv5-1")
     depends_on("netcdf-fortran", when="@v3.0.0-skylabv6")
+    depends_on("netcdf-fortran", when="@v3.1.0-skylabv7")
 
     depends_on("crtm-fix@2.3.0_emc", when="@2.3.0 +fix")
     depends_on("crtm-fix@2.4.0_emc", when="@=2.4.0 +fix")
@@ -51,10 +52,14 @@ class Crtm(CMakePackage):
     depends_on("ecbuild", type=("build"), when="@v3.0.0-skylabv5")
     depends_on("ecbuild", type=("build"), when="@v3.0.0-skylabv5-1")
     depends_on("ecbuild", type=("build"), when="@v3.0.0-skylabv6")
+    depends_on("ecbuild", type=("build"), when="@v3.1.0-skylabv7")
 
     # Spack gets confused by the different repository url, so we use direct URLs here.
 
-    # version("v3.0.0-skylabv6", commit="a31ed458fb702b235bccbe1693d2badffb241d05")
+    version(
+        "v3.1.0-skylabv7",
+        url="https://www.github.com/JCSDA/crtmv3/tarball/90d52eec1f97bb5a098c9834c4499a17de4ff35b",
+        sha256="0751ddad9a0304e62902a11faa1e693b84ad2b338512f8d2c1a03e5cc573a947")
     version(
         "v3.0.0-skylabv6",
         url="https://www.github.com/JCSDA/crtmv3/tarball/a31ed458fb702b235bccbe1693d2badffb241d05",
@@ -62,7 +67,6 @@ class Crtm(CMakePackage):
     )
 
     # Slightly after the Skylab 5 release to fix https://github.com/JCSDA/CRTMv3/pull/48.
-    # TODO: Push for a distinct tag in the CRTMv3 repository.
     version(
         "v3.0.0-skylabv5-1",
         url="https://www.github.com/JCSDA/crtmv3/tarball/d15810f5538d4cf041e94ebfbb41b403d82bed13",

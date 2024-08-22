@@ -666,6 +666,9 @@ class SimpleFilesystemView(FilesystemView):
         if kwargs.get("with_dependencies", True):
             specs.update(get_dependencies(specs))
 
+        if kwargs.get("exclude", None):
+            specs = set(filter_exclude(specs, kwargs["exclude"]))
+
         # Drop externals
         specs = [s for s in specs if not s.external]
 

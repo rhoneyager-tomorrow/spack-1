@@ -798,7 +798,7 @@ class ViewDescriptor:
             else:
                 withdeps = False
 
-            view.add_specs(*specs, with_dependencies=withdeps)
+            view.add_specs(*specs, with_dependencies=withdeps, exclude=self.exclude)
 
             # create symlink from tmp_symlink_name to new_root
             if os.path.exists(tmp_symlink_name):

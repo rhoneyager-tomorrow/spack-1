@@ -655,11 +655,16 @@ class SimpleFilesystemView(FilesystemView):
                 raise ConflictingSpecsError(current_spec, conflicting_spec)
             seen[metadata_dir] = current_spec
 
-    def add_specs(self, *specs: spack.spec.Spec) -> None:
+    def add_specs(self, *specs: spack.spec.Spec, **kwargs) -> None:
         """Link a root-to-leaf topologically ordered list of specs into the view."""
         assert all((s.concrete for s in specs))
         if len(specs) == 0:
             return
+
+        specs = set(specs)
+
+        if kwargs.get("with_dependencies", True):
+            specs.update(get_dependencies(specs))
 
         # Drop externals
         specs = [s for s in specs if not s.external]
